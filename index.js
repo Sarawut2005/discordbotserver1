@@ -67,12 +67,10 @@ if (!googleKeyString) {
 const googleKey = JSON.parse(googleKeyString);
 const privateKey = googleKey.private_key.replace(/\\n/g, '\n');
 
-const auth = new google.auth.JWT(
-  googleKey.client_email,
-  null,
-  privateKey,
-  ['https://www.googleapis.com/auth/drive.readonly']
-);
+const auth = new google.auth.GoogleAuth({
+  credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+  scopes: ['https://www.googleapis.com/auth/drive']
+})
 
 const drive = google.drive({ version: 'v3', auth });
 
