@@ -127,9 +127,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-  // เพิ่มคำสั่งอื่น ๆ ได้ที่นี่
-});
-
 // Log member join
 client.on(Events.GuildMemberAdd, async (member) => {
   const channel = await client.channels.fetch(LOG_CHANNELS.member_join).catch(() => null);
