@@ -68,7 +68,7 @@ const googleKey = JSON.parse(googleKeyString);
 const privateKey = googleKey.private_key.replace(/\\n/g, '\n');
 
 const auth = new google.auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+  credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
   scopes: ['https://www.googleapis.com/auth/drive']
 })
 
