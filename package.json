@@ -12,7 +12,7 @@
   "license": "ISC",
   "description": "",
   "engines": {
-    "node": "24.4.1"
+    "node": "18.20.5"
   },
   "dependencies": {
     "discord.js": "^14.21.0",
