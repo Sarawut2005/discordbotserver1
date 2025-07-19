@@ -56,11 +56,24 @@ async function setupDatabase() {
   )`);
 }
 
-// Google Drive API Setup
-const auth = new google.auth.GoogleAuth({
-  keyFile: 'sincere-lexicon-466015-b5-0681e30da362.json',
-  scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-});
+// --- แก้ไขส่วน Google Drive API ให้โหลดจาก Environment Variable แทน keyFile ---
+
+const googleKeyString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+if (!googleKeyString) {
+  console.error('Error: GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set!');
+  process.exit(1);
+}
+
+const googleKey = JSON.parse(googleKeyString);
+const privateKey = googleKey.private_key.replace(/\\n/g, '\n');
+
+const auth = new google.auth.JWT(
+  googleKey.client_email,
+  null,
+  privateKey,
+  ['https://www.googleapis.com/auth/drive.readonly']
+);
+
 const drive = google.drive({ version: 'v3', auth });
 
 async function getFileLink(filename) {
@@ -73,13 +86,13 @@ async function getFileLink(filename) {
   return `https://drive.google.com/file/d/${files[0].id}/view`;
 }
 
-// Bot ready
+// --- ส่วนที่เหลือของโค้ดยังคงเหมือนเดิม ---
+
 client.once(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag}!`);
   await setupDatabase();
 });
 
-// Interaction handler
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -87,34 +100,34 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.reply('Pong!');
   }
 
-if (interaction.commandName === 'ส่งไฟล์') {
-  const member = interaction.options.getMember('member');
-  const filename = interaction.options.getString('filename');
+  if (interaction.commandName === 'ส่งไฟล์') {
+    const member = interaction.options.getMember('member');
+    const filename = interaction.options.getString('filename');
 
-  if (interaction.channel.id !== ALLOWED_CHANNEL_ID) {
-    await interaction.reply({
-      content: '❌ ใช้คำสั่งนี้ได้เฉพาะในช่องที่กำหนดเท่านั้น',
-      ephemeral: true,
-    });
-    return;
+    if (interaction.channel.id !== ALLOWED_CHANNEL_ID) {
+      await interaction.reply({
+        content: '❌ ใช้คำสั่งนี้ได้เฉพาะในช่องที่กำหนดเท่านั้น',
+        ephemeral: true,
+      });
+      return;
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    const link = await getFileLink(filename);
+    if (!link) {
+      await interaction.editReply(`❌ ไม่พบไฟล์ \`${filename}\` ใน Google Drive`);
+      return;
+    }
+
+    try {
+      await member.send(`📜 คุณได้รับหมายศาลจากศาลยุติธรรม\n🔗 ลิงก์ไฟล์: ${link}`);
+      await interaction.editReply(`✅ ส่งลิงก์ไฟล์ \`${filename}\` ให้ ${member} เรียบร้อยแล้ว`);
+    } catch {
+      await interaction.editReply(`❌ ไม่สามารถส่ง DM ให้ ${member} ได้ (อาจปิด DM)`);
+    }
   }
-
-  // ✅ สำคัญ: แจ้ง Discord ว่าเราจะตอบทีหลัง
-  await interaction.deferReply({ ephemeral: true });
-
-  const link = await getFileLink(filename);
-  if (!link) {
-    await interaction.editReply(`❌ ไม่พบไฟล์ \`${filename}\` ใน Google Drive`);
-    return;
-  }
-
-  try {
-    await member.send(`📜 คุณได้รับหมายศาลจากศาลยุติธรรม\n🔗 ลิงก์ไฟล์: ${link}`);
-    await interaction.editReply(`✅ ส่งลิงก์ไฟล์ \`${filename}\` ให้ ${member} เรียบร้อยแล้ว`);
-  } catch {
-    await interaction.editReply(`❌ ไม่สามารถส่ง DM ให้ ${member} ได้ (อาจปิด DM)`);
-  }
-}
+});
 
   // เพิ่มคำสั่งอื่น ๆ ได้ที่นี่
 });
