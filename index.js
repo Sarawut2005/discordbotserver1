@@ -225,4 +225,4 @@ client.on(Events.InviteCreate, async (invite) => {
   }
 });
 
-client.login(process.env.TOKEN);
+client.login(process.env.DISCORD_TOKEN);
